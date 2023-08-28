@@ -22,6 +22,7 @@ router.post("/", async (req, res) => {
   const product = new Product({
     name: req.body.name,
     price: req.body.price,
+    description: req.body.description,
     // Include other properties here
   });
 
@@ -40,6 +41,9 @@ router.put("/:id", getProduct, async (req, res) => {
   }
   if (req.body.price != null) {
     res.product.price = req.body.price;
+  }
+  if (req.body.description != null) {
+    res.product.description = req.body.description;
   }
   // Update other properties here
 

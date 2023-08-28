@@ -17,7 +17,6 @@ router.post("/", async (req, res) => {
   const client = new Client({
     name: req.body.name,
     email: req.body.email,
-    credit_limit: req.body.credit_limit,
   });
 
   try {
@@ -33,6 +32,33 @@ router.get("/:id", getClient, (req, res) => {
   res.json(res.client);
 });
 
+// PUT (update) a client
+router.put("/:id", getClient, async (req, res) => {
+  if (req.body.name != null) {
+    res.client.name = req.body.name;
+  }
+  if (req.body.email != null) {
+    res.client.email = req.body.email;
+  }
+
+  try {
+    const updatedClient = await res.client.save();
+    res.json(updatedClient);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// DELETE a client
+router.delete("/:id", getClient, async (req, res) => {
+  try {
+    await Client.deleteOne({ _id: res.client._id });
+    res.json({ message: "Client deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Middleware to get a client by ID
 async function getClient(req, res, next) {
   try {
@@ -46,35 +72,5 @@ async function getClient(req, res, next) {
     return res.status(500).json({ message: error.message });
   }
 }
-
-// PUT (update) a client
-router.put("/:id", getClient, async (req, res) => {
-  if (req.body.name != null) {
-    res.client.name = req.body.name;
-  }
-  if (req.body.email != null) {
-    res.client.email = req.body.email;
-  }
-  if (req.body.credit_limit != null) {
-    res.client.credit_limit = req.body.credit_limit;
-  }
-  try {
-    const updatedClient = await res.client.save();
-    res.json(updatedClient);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-// DELETE a client
-router.delete("/:id", getClient, async (req, res) => {
-  try {
-    await Client.deleteOne({ _id: res.client._id });
-
-    res.json({ message: "Client deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 module.exports = router;

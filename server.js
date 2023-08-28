@@ -25,7 +25,7 @@ mongoose
 // Define your routes
 app.use("/api/clients", require("./routes/clients"));
 app.use("/api/products", require("./routes/products"));
-// app.use('/api/invoices', require('./routes/invoices'));
+app.use("/api/invoices", require("./routes/invoices"));
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
