@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+//Schema mapping MongoDb collection keys with Types in JS 
+
 const paymentSchema = new mongoose.Schema({
   amount: Number,
   date: Date,

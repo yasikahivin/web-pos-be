@@ -21,7 +21,6 @@ router.post("/", async (req, res) => {
     due_date,
     client: clientId,
     invoiceItems,
-    subTotal,
     payments,
     isPaid,
   } = req.body;
@@ -32,6 +31,11 @@ router.post("/", async (req, res) => {
     if (!clientExists) {
       return res.status(400).json({ message: "Client not found" });
     }
+
+    const subTotal = invoiceItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
 
     const invoice = new Invoice({
       inv_date,
@@ -53,18 +57,22 @@ router.post("/", async (req, res) => {
 // PUT update an existing invoice
 router.put("/:id", getInvoice, async (req, res) => {
   try {
-    const { inv_date, due_date, invoiceItems, subTotal, payments, isPaid } =
-      req.body;
+    const { inv_date, due_date, invoiceItems, payments, isPaid } = req.body;
 
     // Update invoice fields
     res.invoice.inv_date = inv_date;
     res.invoice.due_date = due_date;
-
-    // Update invoice items and recalculate subTotal
     res.invoice.invoiceItems = invoiceItems;
-    res.invoice.subTotal = subTotal;
+
+    // Update payments and check if invoice is paid
     res.invoice.payments = payments;
-    res.invoice.isPaid = isPaid;
+    res.invoice.ispaid = isPaid || calculateIsPaid(res.invoice);
+
+    // Recalculate subTotal based on updated invoice items
+    res.invoice.subTotal = invoiceItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
 
     const updatedInvoice = await res.invoice.save();
     res.json(updatedInvoice);
@@ -72,6 +80,34 @@ router.put("/:id", getInvoice, async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+// PUT update an existing invoice with a new payment
+router.put("/:id/add-payment", getInvoice, async (req, res) => {
+  try {
+    const { amount, date } = req.body;
+
+    // Add the new payment to the payments array
+    res.invoice.payments.push({ amount, date });
+
+    // Update the ispaid flag based on payments
+    res.invoice.ispaid = calculateIsPaid(res.invoice);
+
+    // Save the updated invoice
+    const updatedInvoice = await res.invoice.save();
+    res.json(updatedInvoice);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Calculate if the invoice is fully paid based on payments
+function calculateIsPaid(invoice) {
+  const totalPaid = invoice.payments.reduce(
+    (total, payment) => total + payment.amount,
+    0
+  );
+  return totalPaid >= invoice.subTotal;
+}
 
 // DELETE an invoice
 router.delete("/:id", getInvoice, async (req, res) => {
